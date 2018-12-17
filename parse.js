@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+
 const fs = require('fs')
 const directory = './rules'
 
@@ -7,22 +8,25 @@ async function getFileNames(directory) {
   return new Promise((resolve, reject) => {
     fs.readdir(directory, (err, filenames) => {
       if (err) { reject(err) }
-      resolve(filenames)
+      resolve(filenames.filter(name => {return name.endsWith('.xml')}))
     })
   })
 }
 
 async function read(filePath) {
   return new Promise((resolve, reject) => {
-    fs.readFile(filePath, "ascii", (err, data) => {
+    fs.readFile(filePath, (err, data) => {
       if (err) { reject(err) }
       resolve(data)
     })
   })
 }
 
+let count = 0
 async function parseXMLfile(rawFileData) {
   return new Promise((resolve, reject) => {
+    // Required with certain parsing errors
+    // var rawFileData = rawFileData.toString().replace("\ufeff", "");
     require('xml2js').parseString(rawFileData, function (parseError, fileContents) {
       if (parseError) { reject(parseError) }
       resolve(fileContents)
@@ -64,7 +68,6 @@ async function run() {
     let fileData = await read(path)
     let parsedXML = await parseXMLfile(fileData)
     let fileHosts = await getHosts(parsedXML)
-    // console.log(fileHosts)
     hosts = hosts.concat(fileHosts)
   }
   console.log(hosts)
