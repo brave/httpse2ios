@@ -23,6 +23,13 @@ async function read(filePath) {
 }
 
 let count = 0
+function write(filePath, data) {
+  fs.writeFile(filePath, data, (err) => {
+    if (err) { reject(err) }
+    console.log("File written to: " + filePath)
+  })
+}
+
 async function parseXMLfile(rawFileData) {
   return new Promise((resolve, reject) => {
     // Required with certain parsing errors
@@ -71,6 +78,7 @@ async function run() {
     hosts = hosts.concat(fileHosts)
   }
   console.log(hosts)
+  write('finalOutput.txt', hosts.sort().join("\n"))
 }
 
 run()
