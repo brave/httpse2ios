@@ -22,7 +22,6 @@ async function read(filePath) {
   })
 }
 
-let count = 0
 function write(filePath, data) {
   fs.writeFile(filePath, data, (err) => {
     if (err) { reject(err) }
@@ -43,13 +42,14 @@ async function parseXMLfile(rawFileData) {
 
 async function getHosts(xmlData) {
   let ruleset = xmlData.ruleset
-  let rules = ruleset.rule
 
-  if (rules.length > 1) {
+  if (defaultOff(ruleset) || includesExclusion(ruleset)) {
     return []
   }
 
+  let rules = ruleset.rule
   let hosts = []
+
   rules.forEach(rule => {
     let from = rule.$.from
     let to = rule.$.to
@@ -67,6 +67,14 @@ async function getHosts(xmlData) {
   return hosts
 }
 
+function defaultOff(ruleset) {
+  return ruleset.$.default_off != undefined
+}
+
+function includesExclusion(ruleset) {
+  return ruleset.exclusion != undefined
+}
+
 async function run() {
   let hosts = []
   let files = await getFileNames(directory)
@@ -77,7 +85,6 @@ async function run() {
     let fileHosts = await getHosts(parsedXML)
     hosts = hosts.concat(fileHosts)
   }
-  console.log(hosts)
   write('finalOutput.txt', hosts.sort().join("\n"))
 }
 
