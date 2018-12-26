@@ -2,6 +2,7 @@
 
 
 const fs = require('fs')
+const url = require('url')
 const directory = './rules'
 
 async function getFileNames(directory) {
@@ -47,24 +48,20 @@ async function getHosts(xmlData) {
     return []
   }
 
-  let rules = ruleset.rule
-  let hosts = []
+  let rules = ruleset.rule.map(r => RegExp(r.$.from))
 
-  rules.forEach(rule => {
-    let from = rule.$.from
-    let to = rule.$.to
+  return ruleset.target.map(t => {
+    let host = t.$.host
+    let target = new URL(`http://${host}`)
+    let allRuleHits = rules.filter(rule => rule.test(target))
 
-    if (from == "^http:" && to == "https:") {
-      
-      // Rule is simple, store all targets
-
-      ruleset.target.forEach(target => {
-        let host = target.$.host
-        hosts.push(host)
-      })
+    // This verifies that each target hits only one rule, and that it is a simple
+    if (allRuleHits.length == 1 && allRuleHits[0] == "/^http:/") {
+      return host
     }
-  })
-  return hosts
+
+    return null
+  }).filter(t => t !== null)
 }
 
 function defaultOff(ruleset) {
