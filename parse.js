@@ -1,5 +1,21 @@
 #!/usr/bin/env node
 
+/**
+ * 
+ * Potential improvements:
+ * 
+ * - 
+ * solve predefined wildcards
+ * `http://url.com/(one|two) -> https://url.com/$1`
+ * This can be split into two rules, and handled since the results are known
+ * (file exp: 4gamer.net.xml)
+ * 
+ * -
+ * URL wildcard prefixes
+ * `*.32red.com  -> /^http:\/\/(?:www\.)?32red\.com\//`
+ * 
+ * 
+ */
 
 const fs = require('fs')
 const url = require('url')
@@ -48,15 +64,56 @@ async function getHosts(xmlData) {
     return []
   }
 
+  let hosts = []
+
+  let rulesFrom = []
+  ruleset.rule.forEach(ruleEntry => {
+    let from = RegExp(ruleEntry.$.from)
+    rulesFrom.push(from)
+
+    try {
+      let ruleURL =  new URL(ruleEntry.$.to)
+
+      // "downgrade" to make it hit the upgrade regex, this is not used in the actual ruleset, just to find what is needed
+      ruleURL.protocol = 'http'
+      let href = ruleURL.href
+
+      if (RegExp(from).test(href) && !includesWildcards(href)) {
+        // Just use the raw `host` for upgrade list
+        hosts.push(ruleURL.host)
+      }
+
+    } catch(error) { /* Lots of URL parsing errors, this is okay */ }
+  })
+
+  return hosts.concat(simpleUpgrades(ruleset))
+}
+
+/**
+ * Wildcards are part of HTTPSE spec to use URL replacement parameters
+ * e.g.
+ * ^http://([^/:@]+)?\.fema\.gov/ -> https://$1.fema.gov/
+ * 
+ * Here the paren rules on LHS are places inside the `$1` on the RHS
+ * Multiple params can be used, but start at index `1`, so just checking for this should be thorough enough
+ * 
+ * @param {String} rule Generally an HTTPS Upgrade `rule`'s `to` attribute 
+ */
+function includesWildcards(rule) {
+  return rule.includes("$1")
+}
+
+function simpleUpgrades(ruleset) {
   let rules = ruleset.rule.map(r => RegExp(r.$.from))
 
+  // Update to `reduce`
   return ruleset.target.map(t => {
     let host = t.$.host
     let target = new URL(`http://${host}`)
     let allRuleHits = rules.filter(rule => rule.test(target))
 
     // This verifies that each target hits only one rule, and that it is a simple
-    if (allRuleHits.length == 1 && allRuleHits[0] == "/^http:/") {
+    if (allRuleHits.length == 1 && allRuleHits[0] == '/^http:/') {
       return host
     }
 
