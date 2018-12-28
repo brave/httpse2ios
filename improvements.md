@@ -7,7 +7,19 @@ This can be split into two rules, and handled since the results are known:
 
 `[ 'url.com/two', 'url.com/one' ]`
 
-(file exp: 4gamer.net.xml)
+(file exp: `4gamer.net.xml`)
+
+
+### Process certain Placeholders
+In some situations placeholders may contain nothing:
+
+from: `^http://(www\.)?url.com` -> to: `https://$1url.com`
+
+In these situations `$1` can be removed and tested against the `from`:
+`from.test(to.remove(`$1`))`
+
+Solving `predefined | options` above (see above section), would also probably auto-solve this issue.
+(file exp: `Dropbox.xml`)
 
 
 ### Handling exclusions
