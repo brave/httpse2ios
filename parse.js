@@ -3,6 +3,7 @@
 const fs = require('fs')
 const url = require('url')
 const directory = './rules'
+const basicRuleHTTP = '/^http:/'
 
 /**
  * 
@@ -92,6 +93,10 @@ function targetUpgrades(ruleset) {
     let target = new URL(`http://${host}`)
     let allRuleHits = rules.filter(rule => rule.test(target))
 
+    if (invalidWildcardHost(host, rules)) {
+      return null
+    }
+
     // This verifies that each target hits only one rule, and that it is a simple rule.
     // One rule hit is important for situations like:
     // `www.url.com`, where rule 1 is a simple http upgrade, and the other is a subdomain rewrite:
@@ -103,6 +108,29 @@ function targetUpgrades(ruleset) {
 
     return null
   }).filter(t => t !== null)
+}
+
+/**
+ * 
+ * Checks to see if a host is a wildcard host (`*.url.com`), and verifies rule application is isolated to a single rule.
+ * 
+ * Certain situations arise that adds complexity to wildcard rules:
+ * `Target.host`: `*.url.com`
+ * 
+ * `Rule.from.1`: `http://www.url.com` -> `https://url.com`
+ * `Rule.from.2`: `http://` -> `https://`
+ * 
+ * `Target.host` above technically applies to both, although both are not representable.
+ * For now, to avoid running into these situations, any ruleset with a wildcard target and multiple rules, excludes the target in question.
+ * Improvements can theoretically be made, as discussed in `improvements.md`
+ * 
+ * @param {String} host Specific 
+ * @param {Array<String>} rules 
+ */
+function invalidWildcardHost(host, rules) {
+  let isWildcard = host.startsWith('*')
+  let httpOnlyRules = rules.length == 1 && rules[0] == basicRuleHTTP
+  return isWildcard && !httpOnlyRules
 }
 
 /**

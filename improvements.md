@@ -27,3 +27,5 @@ See `function includesExclusion`
 (source: `CTEP-EBP.com.xml`)
 
 Here the target works for everything _except_ `www.ctep-ebp.com`, so including this rule while later providing an exception for the `www` URL, is optimal.
+
+See `function invalidWildcardHost`
