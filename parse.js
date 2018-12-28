@@ -66,7 +66,7 @@ function ruleUpgrades(ruleset) {
       ruleURL.protocol = 'http'
       let href = ruleURL.href
 
-      if (RegExp(from).test(href) && !includesWildcards(href)) {
+      if (RegExp(from).test(href) && !includesPlaceholders(href)) {
         // Just use the raw `host` for upgrade list
         hosts.push(ruleURL.host)
       }
@@ -115,7 +115,7 @@ function targetUpgrades(ruleset) {
  * 
  * @param {String} rule Generally an HTTPS Upgrade `rule`'s `to` attribute 
  */
-function includesWildcards(rule) {
+function includesPlaceholders(rule) {
   return rule.includes("$1")
 }
 
