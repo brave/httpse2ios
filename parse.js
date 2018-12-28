@@ -1,22 +1,5 @@
 #!/usr/bin/env node
 
-/**
- * 
- * Potential improvements:
- * 
- * - 
- * Solve predefined wildcards
- * `http://url.com/(one|two) -> https://url.com/$1`
- * This can be split into two rules, and handled since the results are known
- * (file exp: 4gamer.net.xml)
- * 
- * -
- * Handling exclusions
- * https://www.eff.org/https-everywhere/rulesets#exclusions
- * `includesExclusion`
- * 
- */
-
 const fs = require('fs')
 const url = require('url')
 const directory = './rules'
