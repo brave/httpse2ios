@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
+require('url')
 const fs = require('fs')
-const url = require('url')
 const directory = './rules'
 const basicRuleHTTP = '/^http:/'
 
@@ -46,12 +46,12 @@ async function getHosts(xmlData) {
  * Although many are not actionable with iOS HTTPSE upgrades, a good number of them are (~halfish)
  * 
  * Partly Doable:
- * `^http://(?:www\.)?url\.com/ -> https://www.url.com/`
+ * `^http://(?:www\.)?url\.com/` -> `https://www.url.com/`
  * 
  *    ignores:
- * `http://url.com -> https://www.url.com` is _not_ possible, but handling the same URL format is.
+ * `http://url.com` -> `https://www.url.com` is _not_ possible, but handling the same URL format is.
  *    uses:
- * `http://www.url.com -> https://www.url.com`
+ * `http://www.url.com` -> `https://www.url.com`
  * 
  * @param {Ruleset} ruleset An XML top level `ruleset` element
  */
@@ -102,10 +102,9 @@ function targetUpgrades(ruleset) {
     // `www.url.com`, where rule 1 is a simple http upgrade, and the other is a subdomain rewrite:
     // [ `http` -> `https` && `http://www.url.com` -> `https://url.com` ]
     // Since only the first can be represented with iOS rules, this entire target must be ignored.
-    if (allRuleHits.length == 1 && allRuleHits[0] == '/^http:/') {
+    if (allRuleHits.length == 1 && allRuleHits[0] == basicRuleHTTP) {
       return host
     }
-
     return null
   }).filter(t => t !== null)
 }
@@ -136,7 +135,7 @@ function invalidWildcardHost(host, rules) {
 /**
  * Wildcards are part of HTTPSE spec to use URL replacement parameters.
  * e.g.
- * `^http://([^/:@]+)?\.fema\.gov/ -> https://$1.fema.gov/`
+ * `^http://([^/:@]+)?\.fema\.gov/` -> `https://$1.fema.gov/`
  * 
  * Here the paren rules on LHS are places inside the `$1` on the RHS
  * Multiple params can be used, but start at index `1`, so just checking for this should be thorough enough
