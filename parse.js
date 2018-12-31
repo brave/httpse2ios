@@ -2,8 +2,13 @@
 
 require('url')
 const fs = require('fs')
-const directory = './rules'
+const downloader = require('./download.js')
+const args = process.argv.slice(2)
+
 const basicRuleHTTP = '/^http:/'
+const directory = './temp'
+const outputFlatlist = args.includes('flatlist') || args.length == 0
+const output_ios = args.includes('ios') || args.length == 0
 
 /**
  * 
@@ -194,7 +199,19 @@ function write(filePath, data) {
   })
 }
 
+function iosFormat(hosts) {
+  return [{
+    action: {type: "make-https"},
+    trigger: {
+      'url-filter': ".*",
+      'if-domain': hosts
+    }
+  }]
+}
+
 async function run() {
+  await downloader.download(directory)
+
   let hosts = []
   let files = await getFileNames(directory)
   for (file of files) {
@@ -204,7 +221,17 @@ async function run() {
     let fileHosts = await getHosts(parsedXML)
     hosts = hosts.concat(fileHosts)
   }
-  write('finalOutput.txt', hosts.sort().join("\n"))
+  hosts = hosts.sort()
+
+  if (outputFlatlist) {
+    write('upgradelist.txt', hosts.join("\n"))
+  }
+
+  if (output_ios) {
+    write('upgrade-http.json', JSON.stringify(iosFormat(hosts)))
+  }
+
+  downloader.cleanup(directory)
 }
 
 run()
