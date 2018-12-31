@@ -1,6 +1,5 @@
 .DS_Store
 node_modules/
 rules/
-parse2.js
-rules_small/
-finalOutput.txt
+upgradelist.txt
+upgrade-http.json
